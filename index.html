@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0d0b14" />
+  <title>Mamas Expedition — pakeett buat sayang</title>
+
+  <!-- Fonts: JetBrains Mono (terminal/signature) + Plus Jakarta Sans (clean warm body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="./css/base.css" />
+  <link rel="stylesheet" href="./css/overlays.css" />
+  <link rel="stylesheet" href="./css/animations.css" />
+
+  <!-- GSAP for smooth 3D camera & UI transitions -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js" defer></script>
+
+  <!-- Three.js ES Modules Import Map -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- 3D WebGL Stage -->
+  <div id="stage-3d" aria-label="Panggung interaktif 3D Mamas Expedition"></div>
+
+  <!-- =========================================================
+       GATE 0: ROTATE DEVICE OVERLAY (Portrait -> Landscape)
+       ========================================================= -->
+  <section id="rotate-gate" class="overlay overlay--solid" aria-live="polite">
+    <div class="rotate-card">
+      <div class="rotate-badge">MAMAS_EXPEDITION // v2.0</div>
+      <div class="phone-stage" aria-hidden="true">
+        <div class="phone-icon">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <span class="phone-dot"></span>
+          </div>
+        </div>
+        <svg class="rotate-arrow" viewBox="0 0 64 64" fill="none">
+          <path d="M18 16C30 8 48 14 52 28" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M45 26L53 30L55 21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h1 class="rotate-title">puter HP-nya miring dulu ya sayang</h1>
+      <p class="rotate-sub">
+        biar paket 3D-nya kerasa lebih lega &amp; sinematik.<br />
+        <span class="rotate-hint-sub">(pastikan auto-rotate HP nyala ya)</span>
+      </p>
+      <button id="btn-bypass-rotate" class="btn-ghost-sm" type="button">
+        tetap lanjut tanpa putar →
+      </button>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SCENE 1: QUICK BOOT TERMINAL (MamasOS v2 / Expedition)
+       ========================================================= -->
+  <section id="boot-screen" class="overlay overlay--terminal is-hidden" aria-live="polite">
+    <div class="terminal-window">
+      <div class="terminal-bar">
+        <span class="terminal-dots"><i></i><i></i><i></i></span>
+        <span class="terminal-title">MAMASOS_V2 :: EXPEDITION_DISPATCH</span>
+        <span class="terminal-status">LIVE</span>
+      </div>
+      <div id="boot-log" class="terminal-body"></div>
+      <div id="boot-action" class="terminal-action is-hidden">
+        <button id="btn-enter-3d" class="btn-primary-mono" type="button">
+          [ TERIMA PAKEETT → ]
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       TOP & BOTTOM HUD (Visible in 3D Stage)
+       ========================================================= -->
+  <header id="hud-top" class="hud-top is-hidden">
+    <div class="hud-brand">
+      <span class="hud-dot"></span>
+      <span class="hud-brand-text">MAMAS_EXPEDITION</span>
+      <span class="hud-divider">/</span>
+      <span id="hud-state-label" class="hud-state-label">PAKEETT_ARRIVED</span>
+    </div>
+    <div class="hud-controls">
+      <button id="btn-reset-cam" class="btn-hud" type="button" title="Reset posisi kamera">
+        ↺ Reset View
+      </button>
+      <button id="btn-sfx-toggle" class="btn-hud" type="button" aria-pressed="true" title="Nyalakan atau matikan efek suara">
+        🔊 SFX ON
+      </button>
+    </div>
+  </header>
+
+  <!-- Prompt when Box is Closed -->
+  <div id="box-closed-hint" class="bottom-hint is-hidden">
+    <p class="hint-caption">geser buat muter-muter · tap kotaknya buat buka</p>
+    <button id="btn-open-box" class="btn-warm-pill" type="button">
+      📦 Buka pakeett
+    </button>
+  </div>
+
+  <!-- Navigation Dock when Box is Opened -->
+  <nav id="box-opened-dock" class="bottom-dock is-hidden" aria-label="Isi paket">
+    <button class="dock-pill" data-target="letter" type="button">
+      <span class="dock-emoji">✉️</span>
+      <span class="dock-label">Surat Maaf</span>
+      <span class="dock-check" aria-hidden="true"></span>
+    </button>
+    <button class="dock-pill" data-target="flowers" type="button">
+      <span class="dock-emoji">💐</span>
+      <span class="dock-label">Buket Bunga</span>
+      <span class="dock-check" aria-hidden="true"></span>
+    </button>
+    <button class="dock-pill dock-pill--accent" data-target="voucher" type="button">
+      <span class="dock-emoji">🎟️</span>
+      <span class="dock-label">Klaim Jajan</span>
+      <span class="dock-check" aria-hidden="true"></span>
+    </button>
+  </nav>
+
+  <!-- =========================================================
+       VIEW: 3D BOUQUET MESSAGE PANEL (Right Side in Landscape)
+       ========================================================= -->
+  <aside id="flower-panel" class="side-panel side-panel--bouquet is-hidden" aria-live="polite">
+    <div class="side-panel-header">
+      <button id="btn-flower-back" class="btn-back" type="button">← Kembali</button>
+      <span class="panel-tag">FOR_YOU // BOUQUET</span>
+    </div>
+
+    <div class="flower-ending flower-ending--solo">
+      <div id="flower-ending-text" class="flower-ending-text"></div>
+    </div>
+
+    <p class="bouquet-hint">kamu bisa putar-putar buket 3D-nya di sebelah kiri 💐</p>
+  </aside>
+
+  <!-- =========================================================
+       VIEW: APOLOGY LETTER OVERLAY (Staged Typing)
+       ========================================================= -->
+  <section id="letter-modal" class="overlay overlay--blur is-hidden" role="dialog" aria-modal="true" aria-labelledby="letter-heading">
+    <div class="letter-sheet">
+      <div class="letter-header">
+        <button id="btn-letter-back" class="btn-back" type="button">← Kembali</button>
+        <div class="letter-meta">
+          <span class="letter-badge">SURAT_PERMINTAAN_MAAF</span>
+          <span class="letter-date">09.06.2023 — sekarang</span>
+        </div>
+        <button id="btn-letter-skip" class="btn-ghost-xs" type="button">Skip ketik</button>
+      </div>
+      <h2 id="letter-heading" class="letter-title"></h2>
+      <div id="letter-body" class="letter-body"></div>
+      <div class="letter-footer">
+        <span id="letter-signoff" class="letter-signoff is-hidden"></span>
+        <button id="btn-letter-done" class="btn-warm-pill btn-warm-pill--sm is-hidden" type="button">
+          Lihat isi paket lainnya →
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       VIEW: VOUCHER KLAIM JAJAN (3 Landscape Cards -> wa.me)
+       ========================================================= -->
+  <section id="voucher-modal" class="overlay overlay--blur is-hidden" role="dialog" aria-modal="true" aria-labelledby="voucher-heading">
+    <div class="voucher-container">
+      <div class="voucher-header">
+        <button id="btn-voucher-back" class="btn-back" type="button">← Kembali</button>
+        <div class="voucher-heading-group">
+          <span class="panel-tag">DENDA_BAIKAN // KLAIM_1_PILIHAN</span>
+          <h2 id="voucher-heading" class="voucher-title">Pilih voucher jajan buat nebus salah Mamas</h2>
+        </div>
+        <span class="voucher-code-pill">WA_DIRECT</span>
+      </div>
+
+      <div id="voucher-grid" class="voucher-grid"></div>
+
+      <p class="voucher-footnote">
+        Tap salah satu voucher di atas → otomatis langsung nyambung ke WhatsApp Mamas biar tinggal kirim 💛
+      </p>
+    </div>
+  </section>
+
+  <!-- Claim Confirmation Toast -->
+  <div id="claim-toast" class="claim-toast is-hidden" role="status" aria-live="assertive">
+    <div class="claim-stamp">CLAIMED!</div>
+    <p id="claim-toast-text" class="claim-toast-text"></p>
+  </div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
